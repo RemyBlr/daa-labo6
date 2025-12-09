@@ -52,6 +52,24 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
         }
     }
 
+    fun updateContact(contact: Contact) {
+        // Dispatcher.IO for database operations
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateContact(contact)
+            // Back to list
+            _editedContact.postValue(null)
+        }
+    }
+
+    fun deleteContact(contact: Contact) {
+        // Dispatcher.IO for database operations
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.deleteContact(contact)
+            // Back to list
+            _editedContact.postValue(null)
+        }
+    }
+
     // actions
     fun enroll() {
         viewModelScope.launch(Dispatchers.IO) {
