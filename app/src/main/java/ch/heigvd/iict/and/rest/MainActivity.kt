@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.main_content_fragment, EditContactFragment.newInstance())
             .addToBackStack(null) // Can go back to list
-            .commitNow()
+            .commit()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
