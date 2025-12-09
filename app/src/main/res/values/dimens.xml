@@ -7,4 +7,6 @@
     <dimen name="list_item_padding">2dp</dimen>
     <dimen name="list_item_elements_padding">6dp</dimen>
     <dimen name="list_item_icon_size">36dp</dimen>
+    <dimen name="edit_item_padding">16dp</dimen>
+    <dimen name="no_space">0dp</dimen>
 </resources>
