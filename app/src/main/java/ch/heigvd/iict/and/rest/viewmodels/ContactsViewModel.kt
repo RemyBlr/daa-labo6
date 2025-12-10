@@ -14,7 +14,7 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     val allContacts = repository.allContacts
 
     // LiveDAta to track the contact being edited or created
-    private val _editedContact = MutableLiveData<Contact?>()
+    private val _editedContact = MutableLiveData<Contact?>(null)
     val editedContact: MutableLiveData<Contact?> get() = _editedContact
 
     // Actions to start editing or creating contact
