@@ -75,15 +75,69 @@ Par conséquent, on utilise aussi un `ConstraintLayout`.
 ## Exercice 4
 
 ### Choix d'implémentation
-TODO
+
+#### 4.1 Enrollment
+L'enrollment est déclenché via le menu. Le processus :
+1. Suppression de tous les contacts locaux (`clearAllContacts()`)
+2. GET sur `/enroll` → récupération d'un nouvel UUID
+3. Stockage de l'UUID dans **DataStore** (persistance entre redémarrages)
+4. GET sur `/contacts` → récupération des 3 contacts initiaux
+5. Insertion en local avec `remoteId` = id serveur et `dirty = false`
+
+**Pourquoi DataStore ?** : API coroutine-native, évite les problèmes de SharedPreferences sur le main thread.
+
+```kotlin
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "uuid")
+```
+
+#### 4.2 CRUD avec politique "best-effort"
+Chaque opération suit le pattern **local-first** :
+
+**Création :**
+1. `insert()` local → récupère l'id local
+2. POST `/contacts` avec `id = null`
+3. Succès : mise à jour avec `remoteId`, `dirty = false`
+4. Échec : reste `dirty = true`
+
+**Modification :**
+1. `update()` local avec `dirty = true`
+2. PUT `/contacts/{remoteId}` (si `remoteId` existe)
+3. Succès : `dirty = false`
+4. Échec : reste `dirty = true`
+
+**Suppression :**
+1. Marquage : `isDeletedLocally = true`, `dirty = true`
+2. DELETE `/contacts/{remoteId}` (si `remoteId` existe)
+3. Succès : suppression définitive locale
+4. Échec : reste marqué pour sync ultérieure
+
+#### 4.3 Synchronisation manuelle
+La fonction `syncDirtyRead()` récupère tous les contacts avec `dirty = true` et les synchronise selon leur état :
+- `id == null` → création
+- `isDeletedLocally` → suppression
+- sinon → modification
 
 ### Tests effectués
-TODO
+| Test effectué                                  | Résultat attendu                                | Résultat obtenu |
+|------------------------------------------------|-------------------------------------------------|-----------------|
+| Enrollment et récupération des 3 contacts      | 3 contacts initiaux affichés                    | OK              |
+| Création d'un contact (online)                 | Contact créé et synchronisé                     | OK              |
+| Modification d'un contact (online)             | Contact modifié sur serveur                     | OK              |
+| Suppression d'un contact (online)              | Contact supprimé sur serveur                    | OK              |
+| Création offline puis sync                     | Contact synchronisé après bouton sync           | OK              |
+| Modification offline puis sync                 | Modification propagée au serveur                | OK              |
+| Suppression offline puis sync                  | Suppression propagée au serveur                 | OK              |
+| Persistance UUID après redémarrage             | UUID conservé, pas besoin de re-enroll          | OK              |
+| Mode avion pendant opération                   | Opération locale OK, contact reste dirty        | OK              |
 
-### Réponse aux questions
-TODO
+---
+
+## Utilisation d'outils IA
+Un assistant IA a été utilisé pour la relecture du code de synchronisation et l'aide à la documentation.
 
 ---
 
 ## Conclusion
-TODO
+Ce laboratoire nous a permis de mettre en pratique une architecture MVVM complète avec synchronisation REST. La gestion du mode offline via les champs `dirty`, `remoteId` et `isDeletedLocally` permet une expérience utilisateur fluide même sans connexion. L'utilisation de Ktor avec les coroutines Kotlin s'est révélée efficace pour les appels réseau asynchrones.
+
+Améliorations possibles : indicateur visuel pour les contacts non synchronisés, synchronisation automatique en arrière-plan avec WorkManager.

@@ -1,3 +1,12 @@
+/**
+ * ContactsDao.kt
+ *
+ * Interface DAO (Data Access Object) définissant les opérations de base de données
+ * pour les contacts : insertion, mise à jour, suppression et requêtes diverses.
+ *
+ * @authors Bleuer Rémy, Changanaqui Yoann, Rajadurai Thirusan
+ * @date 11.01.2026
+ */
 package ch.heigvd.iict.and.rest.database
 
 import androidx.lifecycle.LiveData

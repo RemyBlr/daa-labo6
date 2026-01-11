@@ -1,3 +1,13 @@
+/**
+ * Contact.kt
+ *
+ * Entité Room représentant un contact. Contient les informations personnelles
+ * ainsi que les champs de synchronisation (remoteId, dirty, isDeletedLocally)
+ * permettant la gestion offline-first avec le serveur REST.
+ *
+ * @authors Bleuer Rémy, Changanaqui Yoann, Rajadurai Thirusan
+ * @date 11.01.2026
+ */
 package ch.heigvd.iict.and.rest.models
 
 import androidx.room.Entity

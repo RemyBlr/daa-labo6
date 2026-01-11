@@ -1,3 +1,13 @@
+/**
+ * MainActivity.kt
+ *
+ * Activité principale de l'application. Gère la navigation entre les fragments
+ * (ListFragment et EditContactFragment) et les actions du menu (enrollment et
+ * synchronisation).
+ *
+ * @authors Bleuer Rémy, Changanaqui Yoann, Rajadurai Thirusan
+ * @date 11.01.2026
+ */
 package ch.heigvd.iict.and.rest
 
 import androidx.appcompat.app.AppCompatActivity
@@ -54,8 +64,6 @@ class MainActivity : AppCompatActivity() {
 
         // contenu
         binding.mainFabNew.setOnClickListener {
-            // FIXME - create a new contact
-            //Toast.makeText(this, "TODO - Création d'un nouveau contact", Toast.LENGTH_SHORT).show()
             contactsViewModel.startCreateContact()
         }
 

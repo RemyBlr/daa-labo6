@@ -1,3 +1,13 @@
+/**
+ * ContactsViewModel.kt
+ *
+ * ViewModel gérant la logique métier des contacts. Expose les données via LiveData
+ * et fournit les actions d'enrollment, de synchronisation et d'édition des contacts.
+ * Utilise les coroutines pour les opérations asynchrones.
+ *
+ * @authors Bleuer Rémy, Changanaqui Yoann, Rajadurai Thirusan
+ * @date 11.01.2026
+ */
 package ch.heigvd.iict.and.rest.viewmodels
 
 import androidx.lifecycle.MutableLiveData

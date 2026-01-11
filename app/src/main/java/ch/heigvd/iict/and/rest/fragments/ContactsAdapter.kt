@@ -51,7 +51,6 @@ class ContactsAdapter(contacts : List<Contact>, private val clickListener: OnIte
             name.text = "${contact.name} ${contact.firstname}"
             phonenumber.text = "${contact.phoneNumber}"
 
-            //FIXME color may depend on item sync status
             val colRes = android.R.color.holo_green_dark
             image.setColorFilter(ContextCompat.getColor(image.context, colRes))
 
@@ -82,7 +81,6 @@ class ContactsDiffCallBack(private val oldList: List<Contact>, private val newLi
         val oldContact = oldList[oldItemPosition]
         val newContact = newList[newItemPosition]
 
-        // FIXME - you may have to change the comparaison if the data class Contact change
         return  oldContact.name == newContact.name &&
                 oldContact.firstname == newContact.firstname &&
                 oldContact.birthday == newContact.birthday &&

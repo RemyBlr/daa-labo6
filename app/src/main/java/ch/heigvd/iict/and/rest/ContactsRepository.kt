@@ -1,3 +1,15 @@
+/**
+ * ContactsRepository.kt
+ *
+ * Repository gérant les opérations CRUD sur les contacts avec synchronisation
+ * vers un serveur REST. Implémente une politique "best-effort" : les opérations
+ * sont d'abord appliquées localement puis synchronisées avec le serveur.
+ * En cas d'échec réseau, les contacts restent marqués "dirty" pour une
+ * synchronisation ultérieure.
+ *
+ * @authors Bleuer Rémy, Changanaqui Yoann, Rajadurai Thirusan
+ * @date 11.01.2026
+ */
 package ch.heigvd.iict.and.rest
 
 import ch.heigvd.iict.and.rest.database.ContactsDao
@@ -48,9 +60,7 @@ class ContactsRepository(
     suspend fun createUuid(): String {
         val newUuid: String = client.get("https://daa.iict.ch/enroll").body()
         dataStore.edit { prefs -> prefs[Keys.UUID] = newUuid }
-
-        System.out.println("Nouveau UUID récupéré ${newUuid} !")
-        return newUuid;
+        return newUuid
     }
 
     suspend fun getAllContactsFromServer(): List<Contact> {
@@ -61,10 +71,14 @@ class ContactsRepository(
             contentType(ContentType.Application.Json)
         }.body<List<Contact>>()
 
-        for(contact in allContacts)
-            contactsDao.insert(contact.copy(dirty = false))
-
-        System.out.println("Contact récupéré du serveur")
+        for(contact in allContacts) {
+            // L'ID du serveur devient remoteId, et on laisse Room générer un id local
+            contactsDao.insert(contact.copy(
+                id = null,
+                remoteId = contact.id.toString(),
+                dirty = false
+            ))
+        }
 
         return contactsDao.getAllContacts()
     }
@@ -74,7 +88,8 @@ class ContactsRepository(
     }
 
     suspend fun insertContact(contact: Contact) {
-        contactsDao.insert(contact)
+        // Insérer localement et récupérer l'ID local généré
+        val localId = contactsDao.insert(contact)
 
         val uuid = getUuid() ?: throw IllegalStateException("UUID unknown")
 
@@ -82,30 +97,39 @@ class ContactsRepository(
             val serverContact: Contact = client.post("https://daa.iict.ch/contacts") {
                 header("X-UUID", uuid)
                 contentType(ContentType.Application.Json)
-                setBody(contact.copy(id = null))
+                setBody(contact.copy(id = null, remoteId = null))
             }.body<Contact>()
 
-            contactsDao.update(serverContact.copy(dirty = false))
-            System.out.println("Contact inséré !")
+            // Mettre à jour avec le remoteId du serveur, en gardant l'ID local
+            contactsDao.update(contact.copy(
+                id = localId,
+                remoteId = serverContact.id.toString(),
+                dirty = false
+            ))
         } catch (e: Exception) {
             // reste dirty
         }
     }
 
     suspend fun updateContact(contact: Contact) {
-        contactsDao.update(contact)
+        // Marquer comme dirty et sauvegarder localement
+        contactsDao.update(contact.copy(dirty = true))
 
         val uuid = getUuid() ?: throw IllegalStateException("UUID unknown")
 
+        // Ne synchroniser que si le contact a un remoteId (existe sur le serveur)
+        if (contact.remoteId == null) return
+
         try {
-            val serverContact = client.put("https://daa.iict.ch/contacts/${contact.id}") {
+            val serverContact = client.put("https://daa.iict.ch/contacts/${contact.remoteId}") {
                 header("X-UUID", uuid)
                 contentType(ContentType.Application.Json)
-                setBody(contact)
+                // Envoyer avec l'id serveur
+                setBody(contact.copy(id = contact.remoteId?.toLongOrNull()))
             }.body<Contact>()
 
-            contactsDao.update(serverContact.copy(dirty = false))
-            System.out.println("Contact mis à jour !")
+            // Mettre à jour localement avec dirty = false
+            contactsDao.update(contact.copy(dirty = false))
         } catch (e: Exception) {
             // reste dirty
         }
@@ -114,13 +138,24 @@ class ContactsRepository(
     suspend fun deleteContact(contact: Contact) {
         val uuid = getUuid() ?: throw IllegalStateException("UUID unknown")
 
-        client.delete("https://daa.iict.ch/contacts/${contact.id}") {
-            header("X-UUID", uuid)
-            contentType(ContentType.Application.Json)
+        // Marquer comme supprimé localement (best-effort)
+        contactsDao.update(contact.copy(isDeletedLocally = true, dirty = true))
+
+        // Si le contact n'existe pas sur le serveur, supprimer directement
+        if (contact.remoteId == null) {
+            contactsDao.delete(contact)
+            return
         }
 
-        contactsDao.delete(contact)
-        System.out.println("Contact supprimé !")
+        try {
+            client.delete("https://daa.iict.ch/contacts/${contact.remoteId}") {
+                header("X-UUID", uuid)
+            }
+            // Succès: supprimer de la DB locale
+            contactsDao.delete(contact)
+        } catch (e: Exception) {
+            // reste dirty avec isDeletedLocally = true, sera supprimé lors de la prochaine sync
+        }
     }
 
     suspend fun clearAllContactsLocally() {
@@ -137,7 +172,6 @@ class ContactsRepository(
                     contact.isDeletedLocally -> { deleteContact(contact) }
                     else -> { updateContact(contact) }
                 }
-                System.out.println("Synchronisation avec la DB effectué !")
             } catch (e: Exception) {
                 // best-effort : on laisse dirty
             }

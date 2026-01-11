@@ -1,3 +1,13 @@
+/**
+ * EditContactFragment.kt
+ *
+ * Fragment d'édition et de création de contacts. Observe le contact en cours
+ * d'édition via LiveData et permet la modification de tous les champs sauf
+ * la date de naissance (non requis selon l'énoncé).
+ *
+ * @authors Bleuer Rémy, Changanaqui Yoann, Rajadurai Thirusan
+ * @date 11.01.2026
+ */
 package ch.heigvd.iict.and.rest.fragments
 
 import android.os.Bundle
