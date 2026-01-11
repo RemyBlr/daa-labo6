@@ -24,7 +24,9 @@ data class Contact(
     var remoteId: String? = null,
 
     // Indicates if the contact is modified locally and needs to be synced
-    var isModifiedLocally: Boolean = false,
+//    var isModifiedLocally: Boolean = false,
+
+    var dirty: Boolean = true,
 
     // Indicates if the contact is deleted locally and needs to be deleted on the server
     var isDeletedLocally: Boolean = false

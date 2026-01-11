@@ -26,65 +26,78 @@ class ContactsRepository(
 
     val allContacts = contactsDao.getAllContactsLiveData()
 
-    // Create
-    suspend fun insertContact(contact: Contact) {
-        val uuid = getUuid()
-
-        if(uuid == null)
-            throw IllegalStateException("UUID unknown")
-
-        client.post("https://daa.iict.ch/contacts") {
-            header("X-UUID", uuid)
-            contentType(ContentType.Application.Json)
-            setBody(contact)
-        } // .body()
-
-        contactsDao.insert(contact)
+    suspend fun getUuid(): String? {
+        val storedUuid = dataStore.data.first()[Keys.UUID]
+        if (storedUuid != null)
+            return storedUuid
+        return null
     }
 
-    // Read
+    // Enroll
+    suspend fun createUuid(): String {
+        val newUuid: String = client.get("https://daa.iict.ch/enroll").body()
+        dataStore.edit { prefs -> prefs[Keys.UUID] = newUuid }
+        return newUuid;
+    }
+
+    suspend fun getAllContactsFromServer(): List<Contact> {
+        val uuid = getUuid() ?: throw IllegalStateException("UUID unknown")
+
+        val allContacts = client.get("https://daa.iict.ch/contacts") {
+            header("X-UUID", uuid)
+            contentType(ContentType.Application.Json)
+        }.body<List<Contact>>()
+
+        for(contact in allContacts)
+            contactsDao.insert(contact.copy(dirty = false))
+
+        return contactsDao.getAllContacts()
+    }
+
     suspend fun getContactById(id: Long): Contact? {
         return contactsDao.getContactById(id)
     }
 
-    suspend fun getAllContacts(): List<Contact> {
-        val uuid = getUuid()
+    suspend fun insertContact(contact: Contact) {
+        contactsDao.insert(contact)
 
-        if(uuid == null)
-            throw IllegalStateException("UUID unknown")
+        val uuid = getUuid() ?: throw IllegalStateException("UUID unknown")
 
-        val contacts = client.get("https://daa.iict.ch/contacts") {
-            header("X-UUID", uuid)
-            contentType(ContentType.Application.Json)
-        }.body()
+        try {
+            val serverContact: Contact = client.post("https://daa.iict.ch/contacts") {
+                header("X-UUID", uuid)
+                contentType(ContentType.Application.Json)
+                setBody(contact.copy(id = null))
+            }.body<Contact>()
 
-        return contacts
-        // return contactsDao.getAllContacts()
-    }
-
-    // Update
-    suspend fun updateContact(contact: Contact) {
-        val uuid = getUuid()
-
-        if(uuid == null)
-            throw IllegalStateException("UUID unknown")
-
-        val contacts = client.put("https://daa.iict.ch/contacts/${contact.id}") {
-            header("X-UUID", uuid)
-            contentType(ContentType.Application.Json)
+            contactsDao.update(serverContact.copy(dirty = false))
+        } catch (e: Exception) {
+            // reste dirty
         }
-
-        contactsDao.update(contact)
     }
 
-    // Delete
+    suspend fun updateContact(contact: Contact) {
+        contactsDao.update(contact)
+
+        val uuid = getUuid() ?: throw IllegalStateException("UUID unknown")
+
+        try {
+            val serverContact = client.put("https://daa.iict.ch/contacts/${contact.id}") {
+                header("X-UUID", uuid)
+                contentType(ContentType.Application.Json)
+                setBody(contact)
+            }.body<Contact>()
+
+            contactsDao.update(serverContact.copy(dirty = false))
+        } catch (e: Exception) {
+            // reste dirty
+        }
+    }
+
     suspend fun deleteContact(contact: Contact) {
-        val uuid = getUuid()
+        val uuid = getUuid() ?: throw IllegalStateException("UUID unknown")
 
-        if(uuid == null)
-            throw IllegalStateException("UUID unknown")
-
-        val contacts = client.delete("https://daa.iict.ch/contacts/${contact.id}") {
+        client.delete("https://daa.iict.ch/contacts/${contact.id}") {
             header("X-UUID", uuid)
             contentType(ContentType.Application.Json)
         }
@@ -96,17 +109,20 @@ class ContactsRepository(
         contactsDao.clearAllContacts()
     }
 
-    suspend fun getUuid(): String? {
-        val storedUuid = dataStore.data.first()[Keys.UUID]
-        if (storedUuid != null)
-            return storedUuid
-        return null
-    }
+    suspend fun syncDirtyRead() {
+        val dirtyContacts = contactsDao.getDirtyContacts()
 
-    suspend fun createUuid(): String {
-        val newUuid: String = client.get("https://daa.iict.ch/enroll").body()
-        dataStore.edit { prefs -> prefs[Keys.UUID] = newUuid }
-        return newUuid;
+        for (contact in dirtyContacts) {
+            try {
+                when {
+                    contact.id == null -> { insertContact(contact) }
+                    contact.isDeletedLocally -> { deleteContact(contact) }
+                    else -> { updateContact(contact) }
+                }
+            } catch (e: Exception) {
+                // best-effort : on laisse dirty
+            }
+        }
     }
 
     companion object {

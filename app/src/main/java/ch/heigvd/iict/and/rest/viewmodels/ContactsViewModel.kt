@@ -89,19 +89,18 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     fun enroll() {
         viewModelScope.launch(Dispatchers.IO) {
             // delete all local db as labo required
-            // ...
+            repository.clearAllContacts()
 
-            // get new uuid
             repository.createUuid();
 
             // sync all server contacts in local db
-            // allContacts = repository.getAllContacts()
+            repository.getAllContactsFromServer()
         }
     }
 
     fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
-            // TODO
+            repository.syncDirtyRead()
         }
     }
 
