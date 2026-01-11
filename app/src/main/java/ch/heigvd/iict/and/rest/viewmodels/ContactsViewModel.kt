@@ -27,13 +27,9 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     private val _editedContact = MutableLiveData<Contact?>(null)
     val editedContact: MutableLiveData<Contact?> get() = _editedContact
 
-//    private val _uuid = MutableLiveData<String?>()
-//    val uuid: LiveData<String?> = _uuid
-
     init {
         viewModelScope.launch {
             repository.getUuid()
-            //_uuid.postValue(storedUuid)
         }
     }
 

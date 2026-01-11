@@ -63,10 +63,10 @@ Par conséquent, on utilise aussi un `ConstraintLayout`.
 ## Exercice 3
 
 ### Choix d'implémentation
-3 nouveaux champs ont étés ajoutés é l'entité `Contact`.
+3 nouveaux champs ont étés ajoutés à l'entité `Contact`.
 - `remoteId` : Stocke l'id du contact à l'identique du serveur. Si cet id est null, c'est qu'il est seulement dispo en local. Permet d'avoir un lien entre l'id créer par `Room` et l'id créer par le serveur.
-- `isModifiedLocally` : Même principe que le précédent, s'il est à true, c'est un contacte qu'il faut synchroniser avec le serveur. Évite également de synchroner les contacts déjà à jour.
-- `isDeletedLocally` : Pareil, mais avec la suppression. S'il est à false, le contact est toujour valide. Permet de garder une trace du contact, pour pouvoir le supprimer par la suite, si pas de réseau sur le moment par exemple.
+- `dirty` : Il indique que le contacte doit être synchroniser avec le serveur. Lorsque la modification sur le serveur *(à l'aide de KTOR)* a échoué.
+- `isDeletedLocally` : Pareil, mais avec la suppression. Si la suppression n'a pas pu avoir lieu sur le serveur alors ce flag est à true. Il faut alors le synchroniser.
 
 ### Tests effectués
 | Test effectué                       | Résultat attendu | Résultat obtenu |
@@ -86,9 +86,9 @@ L'enrollment est déclenché via le menu. Le processus :
 2. GET sur `/enroll` → récupération d'un nouvel UUID
 3. Stockage de l'UUID dans **DataStore** (persistance entre redémarrages)
 4. GET sur `/contacts` → récupération des 3 contacts initiaux
-5. Insertion en local avec `remoteId` = id serveur et `dirty = false`
+5. Insertion des contacts récupéré côté serveur en local avec `remoteId` = id serveur et `dirty = true`
 
-**Pourquoi DataStore ?** : API coroutine-native, évite les problèmes de SharedPreferences sur le main thread.
+**Pourquoi DataStore ?** : API coroutine-native, évite les problèmes de SharedPreferences sur le main thread  vu en cours *(callback)*.
 
 ```kotlin
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "uuid")
@@ -100,14 +100,14 @@ Chaque opération suit le pattern **local-first** :
 **Création :**
 1. `insert()` local → récupère l'id local
 2. POST `/contacts` avec `id = null`
-3. Succès : mise à jour avec `remoteId`, `dirty = false`
-4. Échec : reste `dirty = true`
+   - Succès : mise à jour du contact en local avec `remoteId`, `dirty = false`
+   - Échec : reste `dirty = true`
 
 **Modification :**
 1. `update()` local avec `dirty = true`
 2. PUT `/contacts/{remoteId}` (si `remoteId` existe)
-3. Succès : `dirty = false`
-4. Échec : reste `dirty = true`
+   - Succès : `dirty = false`
+   - Échec : reste `dirty = true`
 
 **Suppression :**
 1. Marquage : `isDeletedLocally = true`, `dirty = true`
@@ -115,10 +115,18 @@ Chaque opération suit le pattern **local-first** :
 3. Succès : suppression définitive locale
 4. Échec : reste marqué pour sync ultérieure
 
+> Note: `isDeletedLocally` peut-être vu comme optionel car le flag `dirty` est activé. Cependant 
+> lors de mauvaise suppression nous pourrions envisager une gestion particulière. C'est pourquoi nous
+> le laissons dans l'entité `Contact`.
+> 
+> A noter également que la sauvegarde en BDD locale s'exécute deux fois. Une au début et une après celle
+> du serveur. Ceci provient de notre gestion de "`dirty` Contact". Ainsi si la communication au serveur
+> échoue, le contact est sauvegardé en locale.
+
 #### 4.3 Synchronisation manuelle
 La fonction `syncDirtyRead()` récupère tous les contacts avec `dirty = true` et les synchronise selon leur état :
 - `id == null` → création
-- `isDeletedLocally` → suppression
+- `isDeletedLocally` → suppression *(si traitement particulier éventuel)*
 - sinon → modification
 
 ### Tests effectués
@@ -144,4 +152,4 @@ Un assistant IA a été utilisé pour la relecture du code de synchronisation et
 ## Conclusion
 Ce laboratoire nous a permis de mettre en pratique une architecture MVVM complète avec synchronisation REST. La gestion du mode offline via les champs `dirty`, `remoteId` et `isDeletedLocally` permet une expérience utilisateur fluide même sans connexion. L'utilisation de Ktor avec les coroutines Kotlin s'est révélée efficace pour les appels réseau asynchrones.
 
-Améliorations possibles : indicateur visuel pour les contacts non synchronisés, synchronisation automatique en arrière-plan avec WorkManager.
+Améliorations possibles : indicateur visuel pour les contacts non synchronisés, synchronisation automatique en arrière-plan avec WorkManager. Ou synchronisation de contact spécifique.
