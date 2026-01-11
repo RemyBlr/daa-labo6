@@ -1,17 +1,12 @@
 package ch.heigvd.iict.and.rest.viewmodels
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import ch.heigvd.iict.and.rest.ContactsRepository
-import ch.heigvd.iict.and.rest.ContactsRepository.Keys
 import ch.heigvd.iict.and.rest.models.Contact
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ContactsViewModel(private val repository: ContactsRepository) : ViewModel() {

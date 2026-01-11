@@ -49,7 +49,7 @@ class ContactsRepository(
         val newUuid: String = client.get("https://daa.iict.ch/enroll").body()
         dataStore.edit { prefs -> prefs[Keys.UUID] = newUuid }
 
-        System.out.println("Nouveau UUID récupéré !")
+        System.out.println("Nouveau UUID récupéré ${newUuid} !")
         return newUuid;
     }
 
