@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.devtools.ksp)
+    kotlin("plugin.serialization") version "2.2.21"
 }
 
 android {
@@ -83,8 +84,11 @@ dependencies {
     // DataStore pour UUID
     implementation("androidx.datastore:datastore-preferences:1.2.0")
 
-    // Ktor core and Android engine
-    implementation("io.ktor:ktor-client-core:2.3.7")
-    implementation("io.ktor:ktor-client-cio:2.3.7")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.kotlinx.serialization.json)
 }

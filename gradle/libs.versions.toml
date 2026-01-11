@@ -13,6 +13,9 @@ fragment = "1.8.9"
 constraintlayout = "2.2.1"
 room = "2.8.3"
 lifecycle = "2.9.4"
+datastoreCore = "1.2.0"
+ktor = "2.3.7"
+kotlin-serialization = "1.6.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +35,14 @@ androidx-lifecycle-runtime-ktx = {group = "androidx.lifecycle", name = "lifecycl
 androidx-lifecycle-viewmodel-ktx = {group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle"}
 androidx-lifecycle-livedata-ktx = {group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycle"}
 androidx-lifecycle-common-java8 = {group = "androidx.lifecycle", name = "lifecycle-common-java8", version.ref = "lifecycle"}
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlin-serialization" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

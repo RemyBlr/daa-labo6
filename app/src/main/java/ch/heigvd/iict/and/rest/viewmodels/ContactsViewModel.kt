@@ -89,7 +89,7 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     fun enroll() {
         viewModelScope.launch(Dispatchers.IO) {
             // delete all local db as labo required
-            repository.clearAllContacts()
+            repository.clearAllContactsLocally()
 
             repository.createUuid();
 
