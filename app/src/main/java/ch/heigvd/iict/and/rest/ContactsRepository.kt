@@ -52,11 +52,14 @@ class ContactsRepository(
         contactsDao.clearAllContacts()
     }
 
-    suspend fun getUuid(): String {
+    suspend fun getUuid(): String? {
         val storedUuid = dataStore.data.first()[Keys.UUID]
         if (storedUuid != null)
             return storedUuid
+        return null;
+    }
 
+    suspend fun getNewUuid(): String {
         val newUuid: String = client.get("https://daa.iict.ch/enroll").body()
         dataStore.edit { prefs -> prefs[Keys.UUID] = newUuid }
 
@@ -66,5 +69,4 @@ class ContactsRepository(
     companion object {
         private val TAG = "ContactsRepository"
     }
-
 }

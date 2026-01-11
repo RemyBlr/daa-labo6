@@ -7,9 +7,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import ch.heigvd.iict.and.rest.ContactsRepository
+import ch.heigvd.iict.and.rest.ContactsRepository.Keys
 import ch.heigvd.iict.and.rest.models.Contact
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ContactsViewModel(private val repository: ContactsRepository) : ViewModel() {
@@ -20,8 +22,15 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     private val _editedContact = MutableLiveData<Contact?>(null)
     val editedContact: MutableLiveData<Contact?> get() = _editedContact
 
-    private val _uuid = MutableLiveData<String>()
-    val uuid: LiveData<String> = _uuid
+    private val _uuid = MutableLiveData<String?>()
+    val uuid: LiveData<String?> = _uuid
+
+    init {
+        viewModelScope.launch {
+            val storedUuid = repository.getUuid()
+            _uuid.postValue(storedUuid)
+        }
+    }
 
     // Actions to start editing or creating contact
     fun startEditContact(contact: Contact) {
@@ -79,8 +88,15 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     // actions
     fun enroll() {
         viewModelScope.launch(Dispatchers.IO) {
-            val enrolledUuid = repository.getUuid();
+            // delete all local db as labo required
+            // ...
+
+            // get new uuid
+            val enrolledUuid = repository.getNewUuid();
             _uuid.postValue(enrolledUuid)
+
+            // sync all server contacts in local db
+            // ...
         }
     }
 
