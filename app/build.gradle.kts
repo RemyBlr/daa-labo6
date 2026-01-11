@@ -60,6 +60,7 @@ dependencies {
     // Room components
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.androidx.datastore.core)
     ksp(libs.room.compiler)
     androidTestImplementation(libs.room.testing)
 
@@ -79,4 +80,11 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    // DataStore pour UUID
+    implementation("androidx.datastore:datastore-preferences:1.2.0")
+
+    // Ktor core and Android engine
+    implementation("io.ktor:ktor-client-core:2.3.7")
+    implementation("io.ktor:ktor-client-cio:2.3.7")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
 }

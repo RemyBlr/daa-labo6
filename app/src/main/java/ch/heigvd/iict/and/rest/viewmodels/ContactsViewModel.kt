@@ -1,11 +1,14 @@
 package ch.heigvd.iict.and.rest.viewmodels
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import ch.heigvd.iict.and.rest.ContactsRepository
 import ch.heigvd.iict.and.rest.models.Contact
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -16,6 +19,9 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     // LiveDAta to track the contact being edited or created
     private val _editedContact = MutableLiveData<Contact?>(null)
     val editedContact: MutableLiveData<Contact?> get() = _editedContact
+
+    private val _uuid = MutableLiveData<String>()
+    val uuid: LiveData<String> = _uuid
 
     // Actions to start editing or creating contact
     fun startEditContact(contact: Contact) {
@@ -73,7 +79,8 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     // actions
     fun enroll() {
         viewModelScope.launch(Dispatchers.IO) {
-            // TODO
+            val enrolledUuid = repository.getUuid();
+            _uuid.postValue(enrolledUuid)
         }
     }
 

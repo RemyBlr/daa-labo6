@@ -2,8 +2,25 @@ package ch.heigvd.iict.and.rest
 
 import ch.heigvd.iict.and.rest.database.ContactsDao
 import ch.heigvd.iict.and.rest.models.Contact
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import kotlinx.coroutines.flow.first
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 
-class ContactsRepository(private val contactsDao: ContactsDao) {
+
+class ContactsRepository(
+    private val contactsDao: ContactsDao,
+    private val dataStore: DataStore<Preferences>
+) {
+    private object Keys {
+        val UUID = stringPreferencesKey("uuid")
+    }
+    private val client = HttpClient(CIO)
 
     val allContacts = contactsDao.getAllContactsLiveData()
 
@@ -33,6 +50,17 @@ class ContactsRepository(private val contactsDao: ContactsDao) {
 
     suspend fun clearAllContacts() {
         contactsDao.clearAllContacts()
+    }
+
+    suspend fun getUuid(): String {
+        val storedUuid = dataStore.data.first()[Keys.UUID]
+        if (storedUuid != null)
+            return storedUuid
+
+        val newUuid: String = client.get("https://daa.iict.ch/enroll").body()
+        dataStore.edit { prefs -> prefs[Keys.UUID] = newUuid }
+
+        return newUuid
     }
 
     companion object {
