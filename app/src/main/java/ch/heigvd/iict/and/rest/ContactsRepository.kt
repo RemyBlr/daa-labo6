@@ -48,16 +48,47 @@ class ContactsRepository(
     }
 
     suspend fun getAllContacts(): List<Contact> {
-        return contactsDao.getAllContacts()
+        val uuid = getUuid()
+
+        if(uuid == null)
+            throw IllegalStateException("UUID unknown")
+
+        val contacts = client.get("https://daa.iict.ch/contacts") {
+            header("X-UUID", uuid)
+            contentType(ContentType.Application.Json)
+        }.body()
+
+        return contacts
+        // return contactsDao.getAllContacts()
     }
 
     // Update
     suspend fun updateContact(contact: Contact) {
+        val uuid = getUuid()
+
+        if(uuid == null)
+            throw IllegalStateException("UUID unknown")
+
+        val contacts = client.put("https://daa.iict.ch/contacts/${contact.id}") {
+            header("X-UUID", uuid)
+            contentType(ContentType.Application.Json)
+        }
+
         contactsDao.update(contact)
     }
 
     // Delete
     suspend fun deleteContact(contact: Contact) {
+        val uuid = getUuid()
+
+        if(uuid == null)
+            throw IllegalStateException("UUID unknown")
+
+        val contacts = client.delete("https://daa.iict.ch/contacts/${contact.id}") {
+            header("X-UUID", uuid)
+            contentType(ContentType.Application.Json)
+        }
+
         contactsDao.delete(contact)
     }
 
