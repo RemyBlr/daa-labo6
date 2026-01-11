@@ -2,11 +2,15 @@
 title: |
     | \vspace{5cm} \LARGE DAA - labo6
 subtitle: DAA_B_9
-author: Bleuer Rémy, Changanaqui Yoann, Rajadurai Thirusan
+author: |
+    Bleuer Rémy \
+    Changanaqui Yoann \
+    Rajadurai Thirusan
 date: 10.12.2025
 geometry: margin=2cm
 output: pdf_document
 ---
+\newpage
 
 # Introduction
 Ce labo nous fait mettre en pratique les concepts vus en cours sur l'architecture MVVM, la gestion de
