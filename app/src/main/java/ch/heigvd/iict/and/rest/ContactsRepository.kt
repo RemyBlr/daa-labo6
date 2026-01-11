@@ -11,6 +11,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 
 
 class ContactsRepository(
@@ -26,6 +28,17 @@ class ContactsRepository(
 
     // Create
     suspend fun insertContact(contact: Contact) {
+        val uuid = getUuid()
+
+        if(uuid == null)
+            throw IllegalStateException("UUID unknown")
+
+        client.post("https://daa.iict.ch/contacts") {
+            header("X-UUID", uuid)
+            contentType(ContentType.Application.Json)
+            setBody(contact)
+        } // .body()
+
         contactsDao.insert(contact)
     }
 
@@ -56,14 +69,13 @@ class ContactsRepository(
         val storedUuid = dataStore.data.first()[Keys.UUID]
         if (storedUuid != null)
             return storedUuid
-        return null;
+        return null
     }
 
-    suspend fun getNewUuid(): String {
+    suspend fun createUuid(): String {
         val newUuid: String = client.get("https://daa.iict.ch/enroll").body()
         dataStore.edit { prefs -> prefs[Keys.UUID] = newUuid }
-
-        return newUuid
+        return newUuid;
     }
 
     companion object {

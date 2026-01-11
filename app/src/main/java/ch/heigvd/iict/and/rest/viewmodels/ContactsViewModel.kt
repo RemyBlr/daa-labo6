@@ -22,13 +22,13 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
     private val _editedContact = MutableLiveData<Contact?>(null)
     val editedContact: MutableLiveData<Contact?> get() = _editedContact
 
-    private val _uuid = MutableLiveData<String?>()
-    val uuid: LiveData<String?> = _uuid
+//    private val _uuid = MutableLiveData<String?>()
+//    val uuid: LiveData<String?> = _uuid
 
     init {
         viewModelScope.launch {
-            val storedUuid = repository.getUuid()
-            _uuid.postValue(storedUuid)
+            repository.getUuid()
+            //_uuid.postValue(storedUuid)
         }
     }
 
@@ -92,11 +92,10 @@ class ContactsViewModel(private val repository: ContactsRepository) : ViewModel(
             // ...
 
             // get new uuid
-            val enrolledUuid = repository.getNewUuid();
-            _uuid.postValue(enrolledUuid)
+            repository.createUuid();
 
             // sync all server contacts in local db
-            // ...
+            // allContacts = repository.getAllContacts()
         }
     }
 
